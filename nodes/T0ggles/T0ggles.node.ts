@@ -1,16 +1,18 @@
-import type { IExecuteFunctions } from 'n8n-core';
 import {
+	IExecuteFunctions,
 	IDataObject,
+	IHttpRequestOptions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	JsonObject,
 	NodeApiError,
 	NodeOperationError,
 } from 'n8n-workflow';
 
 async function t0gglesApiRequest(
 	this: IExecuteFunctions,
-	method: string,
+	method: IHttpRequestOptions['method'],
 	endpoint: string,
 	body: IDataObject = {},
 	qs: IDataObject = {},
@@ -21,7 +23,7 @@ async function t0gglesApiRequest(
 		throw new NodeOperationError(this.getNode(), 'No API key provided. Please configure your t0ggles credentials.');
 	}
 
-	const options = {
+	const options: IHttpRequestOptions = {
 		method,
 		url: `https://t0ggles.com/api/v1${endpoint}`,
 		headers: {
@@ -30,16 +32,20 @@ async function t0gglesApiRequest(
 		},
 		json: true,
 		qs,
-	} as IDataObject;
+	};
 
 	if (method !== 'GET' && Object.keys(body).length > 0) {
 		options.body = body;
 	}
 
+	if (options.qs && Object.keys(options.qs as IDataObject).length === 0) {
+		delete options.qs;
+	}
+
 	try {
 		return await this.helpers.httpRequest(options);
 	} catch (error) {
-		throw new NodeApiError(this.getNode(), error);
+		throw new NodeApiError(this.getNode(), error as JsonObject);
 	}
 }
 

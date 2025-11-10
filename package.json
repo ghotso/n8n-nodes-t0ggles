@@ -16,12 +16,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/example/n8n-nodes-t0ggles.git"
+    "url": "https://github.com/ghotso/n8n-nodes-t0ggles.git"
   },
   "bugs": {
-    "url": "https://github.com/example/n8n-nodes-t0ggles/issues"
+    "url": "https://github.com/ghotso/n8n-nodes-t0ggles/issues"
   },
-  "homepage": "https://github.com/example/n8n-nodes-t0ggles#readme",
+  "homepage": "https://github.com/ghotso/n8n-nodes-t0ggles#readme",
   "files": [
     "dist",
     "README.md",
@@ -37,6 +37,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "n8n-core": "^1.0.0",
+    "n8n-workflow": "^1.0.0",
     "typescript": "^5.0.0"
   }
 }
