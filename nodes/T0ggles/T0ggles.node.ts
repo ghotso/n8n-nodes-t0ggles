@@ -1,0 +1,507 @@
+import type { IExecuteFunctions } from 'n8n-core';
+import {
+	IDataObject,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+	NodeApiError,
+	NodeOperationError,
+} from 'n8n-workflow';
+
+async function t0gglesApiRequest(
+	this: IExecuteFunctions,
+	method: string,
+	endpoint: string,
+	body: IDataObject = {},
+	qs: IDataObject = {},
+) {
+	const credentials = await this.getCredentials('t0gglesApi');
+
+	if (!credentials?.apiKey) {
+		throw new NodeOperationError(this.getNode(), 'No API key provided. Please configure your t0ggles credentials.');
+	}
+
+	const options = {
+		method,
+		url: `https://t0ggles.com/api/v1${endpoint}`,
+		headers: {
+			Authorization: `Bearer ${credentials.apiKey}`,
+			'Content-Type': 'application/json',
+		},
+		json: true,
+		qs,
+	} as IDataObject;
+
+	if (method !== 'GET' && Object.keys(body).length > 0) {
+		options.body = body;
+	}
+
+	try {
+		return await this.helpers.httpRequest(options);
+	} catch (error) {
+		throw new NodeApiError(this.getNode(), error);
+	}
+}
+
+export class T0ggles implements INodeType {
+	description: INodeTypeDescription = {
+		displayName: 't0ggles',
+		name: 't0ggles',
+		icon: 'file:t0ggles.svg',
+		group: ['transform'],
+		version: 1,
+		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
+		description: 'Interact with t0ggles tasks API',
+		defaults: {
+			name: 't0ggles',
+		},
+		inputs: ['main'],
+		outputs: ['main'],
+		credentials: [
+			{
+				name: 't0gglesApi',
+				required: true,
+			},
+		],
+		properties: [
+			{
+				displayName: 'Resource',
+				name: 'resource',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'Task',
+						value: 'task',
+					},
+				],
+				default: 'task',
+			},
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'Create',
+						value: 'create',
+						action: 'Create tasks',
+					},
+					{
+						name: 'Get Many',
+						value: 'getAll',
+						action: 'Get many tasks',
+					},
+				],
+				default: 'getAll',
+				displayOptions: {
+					show: {
+						resource: ['task'],
+					},
+				},
+			},
+
+			// Get Many
+			{
+				displayName: 'Filters',
+				name: 'filters',
+				type: 'collection',
+				placeholder: 'Add Filter',
+				default: {},
+				options: [
+					{
+						displayName: 'Project Key',
+						name: 'projectKey',
+						type: 'string',
+						default: '',
+						description: 'Comma-separated project keys to filter tasks by',
+					},
+					{
+						displayName: 'Status',
+						name: 'status',
+						type: 'string',
+						default: '',
+						description: 'Comma-separated status names to filter tasks by',
+					},
+					{
+						displayName: 'Description Type',
+						name: 'descriptionType',
+						type: 'options',
+						options: [
+							{ name: 'HTML', value: 'html' },
+							{ name: 'Markdown', value: 'markdown' },
+							{ name: 'Text', value: 'text' },
+						],
+						default: 'text',
+					},
+					{
+						displayName: 'Assigned User Email',
+						name: 'assignedUserEmail',
+						type: 'string',
+						default: '',
+						description: 'Comma-separated emails to filter tasks by assignee',
+					},
+					{
+						displayName: 'Priority',
+						name: 'priority',
+						type: 'options',
+						options: [
+							{ name: 'Any', value: '' },
+							{ name: 'High', value: 'high' },
+							{ name: 'Low', value: 'low' },
+							{ name: 'Medium', value: 'medium' },
+						],
+						default: '',
+					},
+					{
+						displayName: 'Pin To Top',
+						name: 'pinToTop',
+						type: 'options',
+						options: [
+							{ name: 'Any', value: '' },
+							{ name: 'False', value: 'false' },
+							{ name: 'True', value: 'true' },
+						],
+						default: '',
+					},
+					{
+						displayName: 'Tag',
+						name: 'tag',
+						type: 'string',
+						default: '',
+						description: 'Comma-separated tags to filter tasks by',
+					},
+					{
+						displayName: 'Start Date',
+						name: 'startDate',
+						type: 'string',
+						default: '',
+						description: 'Single date or range (YYYY-MM-DD or YYYY-MM-DD,YYYY-MM-DD)',
+					},
+					{
+						displayName: 'Due Date',
+						name: 'dueDate',
+						type: 'string',
+						default: '',
+						description: 'Single date or range (YYYY-MM-DD or YYYY-MM-DD,YYYY-MM-DD)',
+					},
+					{
+						displayName: 'Custom Property Filters (JSON)',
+						name: 'customPropertyFiltersJson',
+						type: 'string',
+						typeOptions: {
+							rows: 4,
+						},
+						default: '',
+						description: 'JSON object with custom property filters, e.g. {"prop_Region": "North America"}',
+					},
+				],
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['getAll'],
+					},
+				},
+			},
+
+			// Create
+			{
+				displayName: 'Title',
+				name: 'title',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['create'],
+					},
+				},
+			},
+			{
+				displayName: 'Project Key',
+				name: 'projectKey',
+				type: 'string',
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['create'],
+					},
+				},
+			},
+			{
+				displayName: 'Description Type',
+				name: 'descriptionType',
+				type: 'options',
+				options: [
+					{ name: 'HTML', value: 'html' },
+					{ name: 'Markdown', value: 'markdown' },
+					{ name: 'Text', value: 'text' },
+				],
+				default: 'text',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['create'],
+					},
+				},
+			},
+			{
+				displayName: 'Description Content',
+				name: 'descriptionContent',
+				type: 'string',
+				typeOptions: {
+					rows: 4,
+				},
+				default: '',
+				required: true,
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['create'],
+					},
+				},
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'collection',
+				placeholder: 'Add Field',
+				default: {},
+				options: [
+					{
+						displayName: 'Assigned User Email',
+						name: 'assignedUserEmail',
+						type: 'string',
+						default: '',
+					},
+					{
+						displayName: 'Due Date',
+						name: 'dueDate',
+						type: 'dateTime',
+						default: '',
+					},
+					{
+						displayName: 'Pin To Top',
+						name: 'pinToTop',
+						type: 'boolean',
+						default: false,
+					},
+					{
+						displayName: 'Priority',
+						name: 'priority',
+						type: 'options',
+						options: [
+							{ name: 'High', value: 'high' },
+							{ name: 'Low', value: 'low' },
+							{ name: 'Medium', value: 'medium' },
+						],
+						default: 'medium',
+					},
+					{
+						displayName: 'Properties (JSON)',
+						name: 'propertiesJson',
+						type: 'string',
+						typeOptions: {
+							rows: 4,
+						},
+						default: '',
+						description: 'JSON object defining custom property values',
+					},
+					{
+						displayName: 'Start Date',
+						name: 'startDate',
+						type: 'dateTime',
+						default: '',
+					},
+					{
+						displayName: 'Tags',
+						name: 'tags',
+						type: 'string',
+						default: '',
+						description: 'Comma-separated list of tags',
+					},
+				],
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['create'],
+					},
+				},
+			},
+		],
+	};
+
+	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+		const items = this.getInputData();
+		const returnData: INodeExecutionData[] = [];
+		const resource = this.getNodeParameter('resource', 0) as string;
+		const operation = this.getNodeParameter('operation', 0) as string;
+
+		if (resource === 'task') {
+			if (operation === 'getAll') {
+				const filters = (this.getNodeParameter('filters', 0, {}) ?? {}) as IDataObject;
+				const qs: IDataObject = {};
+
+				const filterKeys = [
+					'projectKey',
+					'status',
+					'assignedUserEmail',
+					'tag',
+					'startDate',
+					'dueDate',
+				] as const;
+
+				for (const key of filterKeys) {
+					const value = filters[key];
+					if (value !== undefined && value !== '') {
+						qs[key] = value;
+					}
+				}
+
+				if (filters.descriptionType) {
+					qs.descriptionType = filters.descriptionType;
+				}
+
+				if (filters.priority !== undefined && filters.priority !== '') {
+					qs.priority = filters.priority;
+				}
+
+				if (filters.pinToTop !== undefined && filters.pinToTop !== '') {
+					qs.pinToTop = filters.pinToTop;
+				}
+
+				if (filters.customPropertyFiltersJson) {
+					let parsed: IDataObject;
+					try {
+						parsed = JSON.parse(filters.customPropertyFiltersJson as string);
+					} catch (error) {
+						throw new NodeOperationError(
+							this.getNode(),
+							'Could not parse Custom Property Filters JSON. Ensure it is valid JSON.',
+						);
+					}
+
+					if (parsed === null || Array.isArray(parsed)) {
+						throw new NodeOperationError(
+							this.getNode(),
+							'Custom Property Filters JSON must define an object.',
+						);
+					}
+
+					for (const [key, value] of Object.entries(parsed)) {
+						qs[key] = value;
+					}
+				}
+
+				const responseData = (await t0gglesApiRequest.call(
+					this,
+					'GET',
+					'/tasks',
+					{},
+					qs,
+				)) as IDataObject;
+
+				const tasks = (responseData.tasks as IDataObject[]) ?? [];
+
+				for (const task of tasks) {
+					returnData.push({
+						json: task,
+					});
+				}
+
+				return [returnData];
+			}
+
+			if (operation === 'create') {
+				for (let i = 0; i < items.length; i++) {
+					const title = this.getNodeParameter('title', i) as string;
+					const projectKey = this.getNodeParameter('projectKey', i) as string;
+					const descriptionType = this.getNodeParameter('descriptionType', i) as string;
+					const descriptionContent = this.getNodeParameter('descriptionContent', i) as string;
+					const additionalFields = (this.getNodeParameter('additionalFields', i, {}) ??
+						{}) as IDataObject;
+
+					const task: IDataObject = {
+						title,
+						projectKey,
+						descriptionType,
+						descriptionContent,
+					};
+
+					if (additionalFields.assignedUserEmail) {
+						task.assignedUserEmail = additionalFields.assignedUserEmail;
+					}
+
+					if (additionalFields.priority) {
+						task.priority = additionalFields.priority;
+					}
+
+					if (additionalFields.pinToTop !== undefined) {
+						task.pinToTop = additionalFields.pinToTop;
+					}
+
+					if (additionalFields.tags) {
+						const tags = (additionalFields.tags as string)
+							.split(',')
+							.map((tag) => tag.trim())
+							.filter((tag) => tag !== '');
+						if (tags.length > 0) {
+							task.tags = tags;
+						}
+					}
+
+					if (additionalFields.startDate) {
+						task.startDate = additionalFields.startDate;
+					}
+
+					if (additionalFields.dueDate) {
+						task.dueDate = additionalFields.dueDate;
+					}
+
+					if (additionalFields.propertiesJson) {
+						let parsedProperties: IDataObject;
+						try {
+							parsedProperties = JSON.parse(additionalFields.propertiesJson as string);
+						} catch (error) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Could not parse Properties JSON. Ensure it is valid JSON.',
+								{ itemIndex: i },
+							);
+						}
+
+						if (parsedProperties === null || Array.isArray(parsedProperties)) {
+							throw new NodeOperationError(
+								this.getNode(),
+								'Properties JSON must define an object.',
+								{ itemIndex: i },
+							);
+						}
+
+						task.properties = parsedProperties;
+					}
+
+					const body: IDataObject = {
+						tasks: [task],
+					};
+
+					const responseData = (await t0gglesApiRequest.call(this, 'POST', '/tasks', body)) as IDataObject;
+
+					returnData.push({
+						json: responseData,
+					});
+				}
+
+				return [returnData];
+			}
+		}
+
+		throw new NodeOperationError(this.getNode(), `The operation "${operation}" is not supported.`);
+	}
+}
+
