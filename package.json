@@ -1,0 +1,43 @@
+{
+  "name": "n8n-nodes-t0ggles",
+  "version": "0.1.0",
+  "description": "n8n community node to interact with the t0ggles tasks API",
+  "main": "dist/nodes/T0ggles/T0ggles.node.js",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "n8n-community-node",
+    "n8n",
+    "t0ggles"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/n8n-nodes-t0ggles.git"
+  },
+  "bugs": {
+    "url": "https://github.com/example/n8n-nodes-t0ggles/issues"
+  },
+  "homepage": "https://github.com/example/n8n-nodes-t0ggles#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "n8n": {
+    "credentials": [
+      "dist/credentials/T0gglesApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/T0ggles/T0ggles.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+
