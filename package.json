@@ -35,6 +35,9 @@
       "dist/nodes/T0ggles/T0ggles.node.js"
     ]
   },
+  "overrides": {
+    "form-data": "^4.0.4"
+  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "n8n-core": "^1.0.0",
