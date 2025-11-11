@@ -53,7 +53,7 @@ export class T0ggles implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 't0ggles',
 		name: 't0ggles',
-		icon: 'file:t0ggles.svg',
+		icon: 'file:t0ggles.png',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
