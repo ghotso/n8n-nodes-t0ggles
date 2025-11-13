@@ -277,145 +277,18 @@ export class T0ggles implements INodeType {
 
 			// Create
 			{
-				displayName: 'Title',
-				name: 'title',
-				type: 'string',
-				default: '',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['task'],
-						operation: ['create'],
-					},
-				},
-			},
-			{
-				displayName: 'Project Key',
-				name: 'projectKey',
-				type: 'string',
-				default: '',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['task'],
-						operation: ['create'],
-					},
-				},
-			},
-			{
-				displayName: 'Description Type',
-				name: 'descriptionType',
-				type: 'options',
-				options: [
-					{ name: 'HTML', value: 'html' },
-					{ name: 'Markdown', value: 'markdown' },
-					{ name: 'Text', value: 'text' },
-				],
-				default: 'text',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['task'],
-						operation: ['create'],
-					},
-				},
-			},
-			{
-				displayName: 'Description Content',
-				name: 'descriptionContent',
-				type: 'string',
-				typeOptions: {
-					rows: 4,
-				},
-				default: '',
-				required: true,
-				displayOptions: {
-					show: {
-						resource: ['task'],
-						operation: ['create'],
-					},
-				},
-			},
-			{
-				displayName: 'Additional Fields',
-				name: 'additionalFields',
-				type: 'collection',
-				placeholder: 'Add Field',
-				default: {},
-				options: [
-					{
-						displayName: 'Assigned User Email',
-						name: 'assignedUserEmail',
-						type: 'string',
-						default: '',
-					},
-					{
-						displayName: 'Due Date',
-						name: 'dueDate',
-						type: 'dateTime',
-						default: '',
-					},
-					{
-						displayName: 'Pin To Top',
-						name: 'pinToTop',
-						type: 'boolean',
-						default: false,
-					},
-					{
-						displayName: 'Priority',
-						name: 'priority',
-						type: 'options',
-						options: [
-							{ name: 'High', value: 'high' },
-							{ name: 'Low', value: 'low' },
-							{ name: 'Medium', value: 'medium' },
-						],
-						default: 'medium',
-					},
-					{
-						displayName: 'Properties (JSON)',
-						name: 'propertiesJson',
-						type: 'string',
-						typeOptions: {
-							rows: 4,
-						},
-						default: '',
-						description: 'JSON object defining custom property values',
-					},
-					{
-						displayName: 'Start Date',
-						name: 'startDate',
-						type: 'dateTime',
-						default: '',
-					},
-					{
-						displayName: 'Tags',
-						name: 'tags',
-						type: 'string',
-						default: '',
-						description: 'Comma-separated list of tags',
-					},
-				],
-				displayOptions: {
-					show: {
-						resource: ['task'],
-						operation: ['create'],
-					},
-				},
-			},
-			{
-				displayName: 'Subtasks',
-				name: 'subtasks',
+				displayName: 'Tasks',
+				name: 'tasks',
 				type: 'fixedCollection',
 				typeOptions: {
 					multipleValues: true,
 				},
-				placeholder: 'Add Subtask',
+				placeholder: 'Add Task',
 				default: {},
 				options: [
 					{
-						displayName: 'Subtask',
-						name: 'subtask',
+						displayName: 'Task',
+						name: 'task',
 						values: [
 							{
 								displayName: 'Title',
@@ -423,7 +296,7 @@ export class T0ggles implements INodeType {
 								type: 'string',
 								default: '',
 								required: true,
-								description: 'Subtask title',
+								description: 'Task title',
 							},
 							{
 								displayName: 'Project Key',
@@ -431,7 +304,7 @@ export class T0ggles implements INodeType {
 								type: 'string',
 								default: '',
 								required: true,
-								description: 'Project key for the subtask',
+								description: 'Project key (e.g., SWIPER, MARKETING)',
 							},
 							{
 								displayName: 'Description Type',
@@ -450,7 +323,7 @@ export class T0ggles implements INodeType {
 								name: 'descriptionContent',
 								type: 'string',
 								typeOptions: {
-									rows: 3,
+									rows: 4,
 								},
 								default: '',
 								required: true,
@@ -496,7 +369,7 @@ export class T0ggles implements INodeType {
 										name: 'propertiesJson',
 										type: 'string',
 										typeOptions: {
-											rows: 3,
+											rows: 4,
 										},
 										default: '',
 										description: 'JSON object defining custom property values',
@@ -513,6 +386,123 @@ export class T0ggles implements INodeType {
 										type: 'string',
 										default: '',
 										description: 'Comma-separated list of tags',
+									},
+								],
+							},
+							{
+								displayName: 'Subtasks',
+								name: 'subtasks',
+								type: 'fixedCollection',
+								typeOptions: {
+									multipleValues: true,
+								},
+								placeholder: 'Add Subtask',
+								default: {},
+								options: [
+									{
+										displayName: 'Subtask',
+										name: 'subtask',
+										values: [
+											{
+												displayName: 'Title',
+												name: 'title',
+												type: 'string',
+												default: '',
+												required: true,
+												description: 'Subtask title',
+											},
+											{
+												displayName: 'Project Key',
+												name: 'projectKey',
+												type: 'string',
+												default: '',
+												required: true,
+												description: 'Project key for the subtask',
+											},
+											{
+												displayName: 'Description Type',
+												name: 'descriptionType',
+												type: 'options',
+												options: [
+													{ name: 'HTML', value: 'html' },
+													{ name: 'Markdown', value: 'markdown' },
+													{ name: 'Text', value: 'text' },
+												],
+												default: 'text',
+												required: true,
+											},
+											{
+												displayName: 'Description Content',
+												name: 'descriptionContent',
+												type: 'string',
+												typeOptions: {
+													rows: 3,
+												},
+												default: '',
+												required: true,
+											},
+											{
+												displayName: 'Additional Fields',
+												name: 'additionalFields',
+												type: 'collection',
+												placeholder: 'Add Field',
+												default: {},
+												options: [
+													{
+														displayName: 'Assigned User Email',
+														name: 'assignedUserEmail',
+														type: 'string',
+														default: '',
+													},
+													{
+														displayName: 'Due Date',
+														name: 'dueDate',
+														type: 'dateTime',
+														default: '',
+													},
+													{
+														displayName: 'Pin To Top',
+														name: 'pinToTop',
+														type: 'boolean',
+														default: false,
+													},
+													{
+														displayName: 'Priority',
+														name: 'priority',
+														type: 'options',
+														options: [
+															{ name: 'High', value: 'high' },
+															{ name: 'Low', value: 'low' },
+															{ name: 'Medium', value: 'medium' },
+														],
+														default: 'medium',
+													},
+													{
+														displayName: 'Properties (JSON)',
+														name: 'propertiesJson',
+														type: 'string',
+														typeOptions: {
+															rows: 3,
+														},
+														default: '',
+														description: 'JSON object defining custom property values',
+													},
+													{
+														displayName: 'Start Date',
+														name: 'startDate',
+														type: 'dateTime',
+														default: '',
+													},
+													{
+														displayName: 'Tags',
+														name: 'tags',
+														type: 'string',
+														default: '',
+														description: 'Comma-separated list of tags',
+													},
+												],
+											},
+										],
 									},
 								],
 							},
@@ -611,44 +601,43 @@ export class T0ggles implements INodeType {
 			}
 
 			if (operation === 'create') {
-				const tasks: IDataObject[] = [];
+				const allTasks: IDataObject[] = [];
 
 				for (let i = 0; i < items.length; i++) {
 					try {
-						const title = this.getNodeParameter('title', i) as string;
-						const projectKey = this.getNodeParameter('projectKey', i) as string;
-						const descriptionType = this.getNodeParameter('descriptionType', i) as string;
-						const descriptionContent = this.getNodeParameter('descriptionContent', i) as string;
-						const additionalFields = (this.getNodeParameter('additionalFields', i, {}) ??
-							{}) as IDataObject;
-						const subtasksData = (this.getNodeParameter('subtasks', i, {}) ?? {}) as IDataObject;
+						const tasksData = (this.getNodeParameter('tasks', i, {}) ?? {}) as IDataObject;
 
-						const task = buildTaskFromParameters(
-							title,
-							projectKey,
-							descriptionType,
-							descriptionContent,
-							additionalFields,
-						);
-
-						if (subtasksData.subtask && Array.isArray(subtasksData.subtask)) {
-							const subtasks: IDataObject[] = [];
-							for (const subtaskData of subtasksData.subtask as IDataObject[]) {
-								const subtask = buildTaskFromParameters(
-									subtaskData.title as string,
-									subtaskData.projectKey as string,
-									subtaskData.descriptionType as string,
-									subtaskData.descriptionContent as string,
-									(subtaskData.additionalFields as IDataObject) ?? {},
+						if (tasksData.task && Array.isArray(tasksData.task)) {
+							for (const taskData of tasksData.task as IDataObject[]) {
+								const task = buildTaskFromParameters(
+									taskData.title as string,
+									taskData.projectKey as string,
+									taskData.descriptionType as string,
+									taskData.descriptionContent as string,
+									(taskData.additionalFields as IDataObject) ?? {},
 								);
-								subtasks.push(subtask);
-							}
-							if (subtasks.length > 0) {
-								task.subtasks = subtasks;
+
+								const subtasksData = (taskData.subtasks as IDataObject) ?? {};
+								if (subtasksData.subtask && Array.isArray(subtasksData.subtask)) {
+									const subtasks: IDataObject[] = [];
+									for (const subtaskData of subtasksData.subtask as IDataObject[]) {
+										const subtask = buildTaskFromParameters(
+											subtaskData.title as string,
+											subtaskData.projectKey as string,
+											subtaskData.descriptionType as string,
+											subtaskData.descriptionContent as string,
+											(subtaskData.additionalFields as IDataObject) ?? {},
+										);
+										subtasks.push(subtask);
+									}
+									if (subtasks.length > 0) {
+										task.subtasks = subtasks;
+									}
+								}
+
+								allTasks.push(task);
 							}
 						}
-
-						tasks.push(task);
 					} catch (error) {
 						if (error instanceof Error) {
 							throw new NodeOperationError(this.getNode(), error.message, { itemIndex: i });
@@ -657,12 +646,12 @@ export class T0ggles implements INodeType {
 					}
 				}
 
-				if (tasks.length === 0) {
-					throw new NodeOperationError(this.getNode(), 'No tasks to create.');
+				if (allTasks.length === 0) {
+					throw new NodeOperationError(this.getNode(), 'No tasks to create. Please add at least one task.');
 				}
 
 				const body: IDataObject = {
-					tasks,
+					tasks: allTasks,
 				};
 
 				const responseData = (await t0gglesApiRequest.call(
