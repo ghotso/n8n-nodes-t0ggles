@@ -10,6 +10,70 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 
+function buildTaskFromParameters(
+	title: string,
+	projectKey: string,
+	descriptionType: string,
+	descriptionContent: string,
+	additionalFields: IDataObject,
+): IDataObject {
+	const task: IDataObject = {
+		title,
+		projectKey,
+		descriptionType,
+		descriptionContent,
+	};
+
+	if (additionalFields.assignedUserEmail) {
+		task.assignedUserEmail = additionalFields.assignedUserEmail;
+	}
+
+	if (additionalFields.priority) {
+		task.priority = additionalFields.priority;
+	}
+
+	if (additionalFields.pinToTop !== undefined) {
+		task.pinToTop = additionalFields.pinToTop;
+	}
+
+	if (additionalFields.tags) {
+		const tags = (additionalFields.tags as string)
+			.split(',')
+			.map((tag) => tag.trim())
+			.filter((tag) => tag !== '');
+		if (tags.length > 0) {
+			task.tags = tags;
+		}
+	}
+
+	if (additionalFields.startDate) {
+		const startDate = additionalFields.startDate as string;
+		task.startDate = new Date(startDate).toISOString();
+	}
+
+	if (additionalFields.dueDate) {
+		const dueDate = additionalFields.dueDate as string;
+		task.dueDate = new Date(dueDate).toISOString();
+	}
+
+	if (additionalFields.propertiesJson) {
+		let parsedProperties: IDataObject;
+		try {
+			parsedProperties = JSON.parse(additionalFields.propertiesJson as string);
+		} catch (error) {
+			throw new Error('Could not parse Properties JSON. Ensure it is valid JSON.');
+		}
+
+		if (parsedProperties === null || Array.isArray(parsedProperties)) {
+			throw new Error('Properties JSON must define an object.');
+		}
+
+		task.properties = parsedProperties;
+	}
+
+	return task;
+}
+
 async function t0gglesApiRequest(
 	this: IExecuteFunctions,
 	method: IHttpRequestOptions['method'],
@@ -339,6 +403,129 @@ export class T0ggles implements INodeType {
 					},
 				},
 			},
+			{
+				displayName: 'Subtasks',
+				name: 'subtasks',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				placeholder: 'Add Subtask',
+				default: {},
+				options: [
+					{
+						displayName: 'Subtask',
+						name: 'subtask',
+						values: [
+							{
+								displayName: 'Title',
+								name: 'title',
+								type: 'string',
+								default: '',
+								required: true,
+								description: 'Subtask title',
+							},
+							{
+								displayName: 'Project Key',
+								name: 'projectKey',
+								type: 'string',
+								default: '',
+								required: true,
+								description: 'Project key for the subtask',
+							},
+							{
+								displayName: 'Description Type',
+								name: 'descriptionType',
+								type: 'options',
+								options: [
+									{ name: 'HTML', value: 'html' },
+									{ name: 'Markdown', value: 'markdown' },
+									{ name: 'Text', value: 'text' },
+								],
+								default: 'text',
+								required: true,
+							},
+							{
+								displayName: 'Description Content',
+								name: 'descriptionContent',
+								type: 'string',
+								typeOptions: {
+									rows: 3,
+								},
+								default: '',
+								required: true,
+							},
+							{
+								displayName: 'Additional Fields',
+								name: 'additionalFields',
+								type: 'collection',
+								placeholder: 'Add Field',
+								default: {},
+								options: [
+									{
+										displayName: 'Assigned User Email',
+										name: 'assignedUserEmail',
+										type: 'string',
+										default: '',
+									},
+									{
+										displayName: 'Due Date',
+										name: 'dueDate',
+										type: 'dateTime',
+										default: '',
+									},
+									{
+										displayName: 'Pin To Top',
+										name: 'pinToTop',
+										type: 'boolean',
+										default: false,
+									},
+									{
+										displayName: 'Priority',
+										name: 'priority',
+										type: 'options',
+										options: [
+											{ name: 'High', value: 'high' },
+											{ name: 'Low', value: 'low' },
+											{ name: 'Medium', value: 'medium' },
+										],
+										default: 'medium',
+									},
+									{
+										displayName: 'Properties (JSON)',
+										name: 'propertiesJson',
+										type: 'string',
+										typeOptions: {
+											rows: 3,
+										},
+										default: '',
+										description: 'JSON object defining custom property values',
+									},
+									{
+										displayName: 'Start Date',
+										name: 'startDate',
+										type: 'dateTime',
+										default: '',
+									},
+									{
+										displayName: 'Tags',
+										name: 'tags',
+										type: 'string',
+										default: '',
+										description: 'Comma-separated list of tags',
+									},
+								],
+							},
+						],
+					},
+				],
+				displayOptions: {
+					show: {
+						resource: ['task'],
+						operation: ['create'],
+					},
+				},
+			},
 		],
 	};
 
@@ -424,84 +611,70 @@ export class T0ggles implements INodeType {
 			}
 
 			if (operation === 'create') {
+				const tasks: IDataObject[] = [];
+
 				for (let i = 0; i < items.length; i++) {
-					const title = this.getNodeParameter('title', i) as string;
-					const projectKey = this.getNodeParameter('projectKey', i) as string;
-					const descriptionType = this.getNodeParameter('descriptionType', i) as string;
-					const descriptionContent = this.getNodeParameter('descriptionContent', i) as string;
-					const additionalFields = (this.getNodeParameter('additionalFields', i, {}) ??
-						{}) as IDataObject;
+					try {
+						const title = this.getNodeParameter('title', i) as string;
+						const projectKey = this.getNodeParameter('projectKey', i) as string;
+						const descriptionType = this.getNodeParameter('descriptionType', i) as string;
+						const descriptionContent = this.getNodeParameter('descriptionContent', i) as string;
+						const additionalFields = (this.getNodeParameter('additionalFields', i, {}) ??
+							{}) as IDataObject;
+						const subtasksData = (this.getNodeParameter('subtasks', i, {}) ?? {}) as IDataObject;
 
-					const task: IDataObject = {
-						title,
-						projectKey,
-						descriptionType,
-						descriptionContent,
-					};
+						const task = buildTaskFromParameters(
+							title,
+							projectKey,
+							descriptionType,
+							descriptionContent,
+							additionalFields,
+						);
 
-					if (additionalFields.assignedUserEmail) {
-						task.assignedUserEmail = additionalFields.assignedUserEmail;
-					}
-
-					if (additionalFields.priority) {
-						task.priority = additionalFields.priority;
-					}
-
-					if (additionalFields.pinToTop !== undefined) {
-						task.pinToTop = additionalFields.pinToTop;
-					}
-
-					if (additionalFields.tags) {
-						const tags = (additionalFields.tags as string)
-							.split(',')
-							.map((tag) => tag.trim())
-							.filter((tag) => tag !== '');
-						if (tags.length > 0) {
-							task.tags = tags;
-						}
-					}
-
-					if (additionalFields.startDate) {
-						task.startDate = additionalFields.startDate;
-					}
-
-					if (additionalFields.dueDate) {
-						task.dueDate = additionalFields.dueDate;
-					}
-
-					if (additionalFields.propertiesJson) {
-						let parsedProperties: IDataObject;
-						try {
-							parsedProperties = JSON.parse(additionalFields.propertiesJson as string);
-						} catch (error) {
-							throw new NodeOperationError(
-								this.getNode(),
-								'Could not parse Properties JSON. Ensure it is valid JSON.',
-								{ itemIndex: i },
-							);
+						if (subtasksData.subtask && Array.isArray(subtasksData.subtask)) {
+							const subtasks: IDataObject[] = [];
+							for (const subtaskData of subtasksData.subtask as IDataObject[]) {
+								const subtask = buildTaskFromParameters(
+									subtaskData.title as string,
+									subtaskData.projectKey as string,
+									subtaskData.descriptionType as string,
+									subtaskData.descriptionContent as string,
+									(subtaskData.additionalFields as IDataObject) ?? {},
+								);
+								subtasks.push(subtask);
+							}
+							if (subtasks.length > 0) {
+								task.subtasks = subtasks;
+							}
 						}
 
-						if (parsedProperties === null || Array.isArray(parsedProperties)) {
-							throw new NodeOperationError(
-								this.getNode(),
-								'Properties JSON must define an object.',
-								{ itemIndex: i },
-							);
+						tasks.push(task);
+					} catch (error) {
+						if (error instanceof Error) {
+							throw new NodeOperationError(this.getNode(), error.message, { itemIndex: i });
 						}
-
-						task.properties = parsedProperties;
+						throw error;
 					}
-
-					const body: IDataObject = {
-						tasks: [task],
-					};
-
-					const responseData = (await t0gglesApiRequest.call(this, 'POST', '/tasks', body)) as IDataObject;
-
-					returnData.push({
-						json: responseData,
-					});
 				}
+
+				if (tasks.length === 0) {
+					throw new NodeOperationError(this.getNode(), 'No tasks to create.');
+				}
+
+				const body: IDataObject = {
+					tasks,
+				};
+
+				const responseData = (await t0gglesApiRequest.call(
+					this,
+					'POST',
+					'/tasks',
+					body,
+				)) as IDataObject;
+
+				returnData.push({
+					json: responseData,
+				});
 
 				return [returnData];
 			}
