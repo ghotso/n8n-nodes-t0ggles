@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-t0ggles",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "n8n community node to interact with the t0ggles tasks API",
   "main": "dist/nodes/T0ggles/T0ggles.node.js",
   "scripts": {
